@@ -7,20 +7,21 @@ import {
   Sparkles,
   ChevronDown,
   Check,
+  Globe,
 } from 'lucide-react';
 import { useAuth } from '../app/providers/AuthContext';
 import { useToast } from '../app/providers/ToastContext';
 import type { UserRole } from '../types';
 import { Modal } from '../components/ui/Modal';
 import { mockStore } from '../services/mockStore';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 
 interface HeaderProps {
   onToggleMobile: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({ onToggleMobile }) => {
-  const { user, logout, switchRole } = useAuth();
+  const { user, logout, switchRole, isAdminUnlocked } = useAuth();
   const { showToast } = useToast();
   const navigate = useNavigate();
 
@@ -29,13 +30,18 @@ export const Header: React.FC<HeaderProps> = ({ onToggleMobile }) => {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
 
-  const rolesList: { role: UserRole; label: string; desc: string }[] = [
+  const allRolesList: { role: UserRole; label: string; desc: string }[] = [
     { role: 'admin', label: 'Administrador General', desc: 'Acceso total y configuración' },
     { role: 'ventas', label: 'Ejecutivo Comercial', desc: 'Clientes, Ventas y Cotizaciones' },
     { role: 'compras', label: 'Jefe de Abastecimiento', desc: 'Proveedores y Órdenes de Compra' },
     { role: 'almacen', label: 'Encargado de Almacén', desc: 'Inventario, Stock y Kardex' },
     { role: 'finanzas', label: 'Analista de Finanzas', desc: 'Tesorería, CxC y CxP' },
   ];
+
+  // Admin se mantiene oculto a menos que se hayan hecho los 5 clics en el logo o el rol actual sea admin
+  const rolesList = allRolesList.filter(
+    (r) => r.role !== 'admin' || isAdminUnlocked || user?.role === 'admin'
+  );
 
   const handleRoleChange = (r: UserRole) => {
     switchRole(r);
@@ -119,7 +125,29 @@ export const Header: React.FC<HeaderProps> = ({ onToggleMobile }) => {
         </div>
 
         {/* Acciones Derecha */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          {/* Enlace a Landing Page */}
+          <Link
+            to="/landing"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.35rem',
+              color: 'var(--color-primary)',
+              backgroundColor: 'var(--color-primary-light)',
+              border: '1px solid var(--color-primary-border)',
+              padding: '0.25rem 0.65rem',
+              borderRadius: 'var(--radius-full)',
+              fontSize: '0.75rem',
+              fontWeight: 600,
+              textDecoration: 'none',
+            }}
+            title="Ver la Landing Page pública del ERP"
+          >
+            <Globe size={13} />
+            <span>Ver Landing</span>
+          </Link>
+
           {/* Badge Informativo de Modo Demostración */}
           <div
             title="Esta sesión está operando con datos simulados locales y trazables según promt.md"
@@ -344,6 +372,27 @@ export const Header: React.FC<HeaderProps> = ({ onToggleMobile }) => {
                       {user?.role === r.role && <Check size={14} />}
                     </button>
                   ))}
+                </div>
+
+                <div style={{ padding: '0.5rem', borderBottom: '1px solid var(--color-border)' }}>
+                  <Link
+                    to="/landing"
+                    onClick={() => setIsUserMenuOpen(false)}
+                    style={{
+                      width: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      padding: '0.4rem 0.5rem',
+                      fontSize: '0.75rem',
+                      color: 'var(--color-text-main)',
+                      textDecoration: 'none',
+                      borderRadius: 'var(--radius-sm)',
+                    }}
+                  >
+                    <Globe size={15} color="var(--color-primary)" />
+                    <span>Ver Landing Page Pública</span>
+                  </Link>
                 </div>
 
                 <div style={{ padding: '0.5rem' }}>

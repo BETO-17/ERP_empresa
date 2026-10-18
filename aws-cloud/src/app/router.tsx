@@ -16,8 +16,14 @@ import { FinancePage } from '../modules/finance/FinancePage';
 import { DocumentsPage } from '../modules/documents/DocumentsPage';
 import { AdministrationPage } from '../modules/administration/AdministrationPage';
 import { ReportsPage } from '../modules/reports/ReportsPage';
+import { LandingPage } from '../modules/landing/LandingPage';
 
 export const router = createBrowserRouter([
+  // Ruta pública: Landing Page
+  {
+    path: '/landing',
+    element: <LandingPage />,
+  },
   // Rutas públicas / autenticación
   {
     element: <AuthLayout />,

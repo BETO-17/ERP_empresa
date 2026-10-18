@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
-import { Outlet, Navigate } from 'react-router-dom';
+import { Outlet, Navigate, useNavigate } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import { useAuth } from '../app/providers/AuthContext';
 import { LoadingState } from '../components/ui/FeedbackStates';
+import { AccessDeniedModal } from '../components/ui/AccessDeniedModal';
 
 export const AppLayout: React.FC = () => {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, isAccessDeniedOpen, accessDeniedMessage, closeAccessDenied } = useAuth();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const navigate = useNavigate();
 
   if (isLoading) {
     return (
@@ -19,7 +21,7 @@ export const AppLayout: React.FC = () => {
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/landing" replace />;
   }
 
   return (
@@ -37,6 +39,14 @@ export const AppLayout: React.FC = () => {
           <Outlet />
         </main>
       </div>
+
+      {/* Alerta Roja de Acceso Denegado en el Centro */}
+      <AccessDeniedModal
+        isOpen={isAccessDeniedOpen}
+        onClose={closeAccessDenied}
+        message={accessDeniedMessage || undefined}
+        onNavigateHome={() => navigate('/dashboard')}
+      />
     </div>
   );
 };
