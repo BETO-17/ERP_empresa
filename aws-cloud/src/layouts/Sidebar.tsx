@@ -2,6 +2,7 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard,
+  UserCircle,
   Users,
   ShoppingCart,
   FileSpreadsheet,
@@ -69,6 +70,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
           name: 'Dashboard',
           path: '/dashboard',
           icon: <LayoutDashboard size={18} />,
+        },
+        {
+          name: 'Mi Perfil',
+          path: '/profile',
+          icon: <UserCircle size={18} />,
         },
       ],
     },
@@ -385,7 +391,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
           }}
         >
           {!isCollapsed ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', minWidth: 0 }}>
+            <NavLink
+              to="/profile"
+              onClick={onCloseMobile}
+              style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', minWidth: 0, textDecoration: 'none', color: 'inherit' }}
+            >
               <div
                 style={{
                   width: '32px',
@@ -411,6 +421,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     whiteSpace: 'nowrap',
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
+                    color: '#e2e8f0',
                   }}
                 >
                   {user?.name}
@@ -419,7 +430,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   Rol: {user?.role}
                 </div>
               </div>
-            </div>
+            </NavLink>
           ) : (
             <button
               type="button"

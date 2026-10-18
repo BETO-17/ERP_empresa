@@ -7,11 +7,13 @@ import { FormField } from '../../components/ui/FormField';
 import { Input, Select } from '../../components/ui/Input';
 import { mockStore } from '../../services/mockStore';
 import { useToast } from '../../app/providers/ToastContext';
+import { useAuth } from '../../app/providers/AuthContext';
 import { formatDateTime } from '../../utils/formatters';
 import type { User, AuditLog, CompanySettings, UserRole } from '../../types';
 import { Settings, Plus, ToggleLeft, ToggleRight, Check } from 'lucide-react';
 
 export const AdministrationPage: React.FC = () => {
+  const { user: currentUser } = useAuth();
   const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState<'usuarios' | 'auditoria' | 'config'>('usuarios');
 
@@ -53,10 +55,19 @@ export const AdministrationPage: React.FC = () => {
     showToast('Nuevo usuario corporativo creado y asignado', 'success');
   };
 
-  const handleToggleUserActive = (user: User) => {
-    mockStore.updateUser(user.id, { isActive: !user.isActive });
+  const handleToggleUserActive = (userItem: User) => {
+    if (userItem.role === 'admin' && currentUser?.id === userItem.id) {
+      showToast('No es posible desactivar tu propia cuenta de Administrador principal', 'warning');
+      return;
+    }
+
+    const newStatus = !userItem.isActive;
+    mockStore.updateUser(userItem.id, { isActive: newStatus });
     refreshData();
-    showToast(`Usuario ${user.name} ${user.isActive ? 'desactivado' : 'activado'}`, 'info');
+    showToast(
+      `Usuario ${userItem.name} ${newStatus ? 'activado' : 'desactivado'}. Registro generado en Auditoría.`,
+      newStatus ? 'success' : 'info'
+    );
   };
 
   const handleSaveCompanySettings = (e: React.FormEvent) => {
@@ -120,13 +131,14 @@ export const AdministrationPage: React.FC = () => {
         <Button
           variant="ghost"
           size="sm"
+          disabled={row.role === 'admin' && row.id === currentUser?.id}
           onClick={() => handleToggleUserActive(row)}
-          title={row.isActive ? 'Desactivar usuario' : 'Activar usuario'}
+          title={row.role === 'admin' && row.id === currentUser?.id ? 'No puedes desactivar tu cuenta' : (row.isActive ? 'Desactivar usuario' : 'Activar usuario')}
         >
           {row.isActive ? (
-            <ToggleRight size={20} color="var(--color-success)" />
+            <ToggleRight size={22} color="var(--color-success)" />
           ) : (
-            <ToggleLeft size={20} color="var(--color-text-subtle)" />
+            <ToggleLeft size={22} color="#ef4444" />
           )}
         </Button>
       ),

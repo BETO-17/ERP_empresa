@@ -272,6 +272,10 @@
   max-width: 850px;
 }
 
+.modal-content-sm {
+  max-width: 420px;
+}
+
 .modal-header {
   display: flex;
   align-items: center;
@@ -393,17 +397,23 @@ html {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 90%;
-  max-width: 520px;
+  width: min(92vw, 480px);
+  max-width: 480px;
   background: radial-gradient(circle at center, #1c0a0a 0%, #0c0202 85%, #050000 100%);
   border: 2px solid #ef4444;
   border-radius: var(--radius-2xl, 1rem);
-  animation: accessDeniedPopShake 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards, redPulseGlow 2.5s infinite ease-in-out;
+  animation: accessDeniedPopShake 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards, redPulseGlow 2.5s infinite ease-in-out;
   color: #ffffff;
   padding: 2.25rem 2rem;
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
   z-index: 10000;
   user-select: none;
+  box-shadow: 0 0 50px rgba(239, 68, 68, 0.4), 0 25px 50px -12px rgba(0, 0, 0, 0.85);
 }
 
 .access-denied-backdrop {

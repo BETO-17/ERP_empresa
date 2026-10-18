@@ -12,6 +12,7 @@ export const AuthLayout: React.FC = () => {
     registerLogoClick,
     isAdminUnlocked,
     isAccessDeniedOpen,
+    accessDeniedTitle,
     accessDeniedMessage,
     closeAccessDenied,
   } = useAuth();
@@ -145,6 +146,7 @@ export const AuthLayout: React.FC = () => {
       <AccessDeniedModal
         isOpen={isAccessDeniedOpen}
         onClose={closeAccessDenied}
+        title={accessDeniedTitle}
         message={accessDeniedMessage || undefined}
       />
     </div>

@@ -67,7 +67,11 @@ class MockStore {
 
   // --- Usuarios ---
   getUsers(): User[] {
-    return this.getStorage<User[]>('users', INITIAL_USERS);
+    const list = this.getStorage<User[]>('users', INITIAL_USERS);
+    return list.map((u) => ({
+      ...u,
+      isActive: u.isActive !== undefined ? u.isActive : true,
+    }));
   }
 
   addUser(user: Omit<User, 'id' | 'createdAt'>): User {
@@ -75,6 +79,7 @@ class MockStore {
     const newUser: User = {
       ...user,
       id: `usr-${Date.now()}`,
+      isActive: user.isActive !== undefined ? user.isActive : true,
       createdAt: new Date().toISOString(),
     };
     this.setStorage('users', [newUser, ...users]);
@@ -86,8 +91,20 @@ class MockStore {
     const users = this.getUsers();
     const idx = users.findIndex((u) => u.id === id);
     if (idx === -1) return null;
+    const oldUser = users[idx];
     users[idx] = { ...users[idx], ...updates };
     this.setStorage('users', users);
+
+    // Si cambió el estado de activación (activo/inactivo), registrar trazabilidad en auditoría
+    if (updates.isActive !== undefined && updates.isActive !== oldUser.isActive) {
+      this.logAction(
+        'Carlos Mendoza',
+        'admin',
+        updates.isActive ? 'ACTIVAR_USUARIO' : 'DESACTIVAR_USUARIO',
+        'Usuarios y Seguridad',
+        `El Administrador ${updates.isActive ? 'activó' : 'desactivó'} el acceso corporativo de ${oldUser.name} (${oldUser.email}) con rol [${oldUser.role.toUpperCase()}].`
+      );
+    }
     return users[idx];
   }
 

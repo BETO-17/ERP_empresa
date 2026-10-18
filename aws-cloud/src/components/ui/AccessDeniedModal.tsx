@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { ShieldAlert, Lock, AlertTriangle, ArrowRight, CornerDownLeft } from 'lucide-react';
+import { ShieldAlert, Lock, ArrowRight, CornerDownLeft } from 'lucide-react';
 import { playAccessDeniedSound } from '../../utils/soundEffects';
 
 interface AccessDeniedModalProps {
@@ -119,32 +119,7 @@ export const AccessDeniedModal: React.FC<AccessDeniedModalProps> = ({
           )}
         </p>
 
-        {/* Tarjeta de Seguridad y Pista Oculta */}
-        <div
-          style={{
-            backgroundColor: 'rgba(239, 68, 68, 0.08)',
-            border: '1px solid rgba(239, 68, 68, 0.3)',
-            borderRadius: 'var(--radius-lg)',
-            padding: '0.75rem 1rem',
-            fontSize: '0.75rem',
-            color: '#fca5a5',
-            marginBottom: '1.5rem',
-            textAlign: 'left',
-            display: 'flex',
-            alignItems: 'flex-start',
-            gap: '0.625rem',
-          }}
-        >
-          <AlertTriangle size={18} color="#ef4444" style={{ flexShrink: 0, marginTop: '2px' }} />
-          <div>
-            <div style={{ fontWeight: 700, color: '#f87171', marginBottom: '2px' }}>
-              Restricción del Sistema:
-            </div>
-            <div>
-              El acceso de Administrador está oculto y encriptado. Solo el personal que conozca el acceso secreto corporativo (<strong>5 clics en el logo</strong>) puede desbloquearlo.
-            </div>
-          </div>
-        </div>
+
 
         {/* Botones de Acción */}
         <div

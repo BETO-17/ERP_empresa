@@ -5,6 +5,7 @@ import { RoleGuard } from '../components/RoleGuard';
 import { LoginPage } from '../modules/auth/LoginPage';
 import { UnauthorizedPage } from '../modules/auth/UnauthorizedPage';
 import { DashboardPage } from '../modules/dashboard/DashboardPage';
+import { ProfilePage } from '../modules/profile/ProfilePage';
 import { CustomersPage } from '../modules/customers/CustomersPage';
 import { SuppliersPage } from '../modules/suppliers/SuppliersPage';
 import { ProductsPage } from '../modules/inventory/ProductsPage';
@@ -51,6 +52,11 @@ export const router = createBrowserRouter([
       {
         path: 'dashboard',
         element: <DashboardPage />,
+      },
+      // Perfil del usuario actual
+      {
+        path: 'profile',
+        element: <ProfilePage />,
       },
       // Comercial
       {

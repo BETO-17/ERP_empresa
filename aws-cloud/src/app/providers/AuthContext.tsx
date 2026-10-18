@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useRef, useCallback } from 'react';
 import type { User, UserRole } from '../../types';
 import { INITIAL_USERS } from '../../services/mockData';
+import { mockStore } from '../../services/mockStore';
 import { playLogoClickSound, playSecretUnlockSound } from '../../utils/soundEffects';
 
 interface AuthContextType {
@@ -17,8 +18,9 @@ interface AuthContextType {
   registerLogoClick: () => { count: number; justUnlocked: boolean; justLocked: boolean };
   // Alerta modal de acceso denegado en el centro
   isAccessDeniedOpen: boolean;
+  accessDeniedTitle: string;
   accessDeniedMessage: string | null;
-  triggerAccessDenied: (message?: string) => void;
+  triggerAccessDenied: (message?: string, title?: string) => void;
   closeAccessDenied: () => void;
 }
 
@@ -41,17 +43,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const stored = sessionStorage.getItem(AUTH_STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored) as User;
+        const storeUser = mockStore.getUsers().find(
+          (u) => u.email.toLowerCase() === parsed.email.toLowerCase() || u.id === parsed.id
+        );
         // Si el usuario guardado es admin pero aún no se ha desbloqueado, bajar a ventas
         const isUnlocked = sessionStorage.getItem(ADMIN_UNLOCKED_KEY) === 'true';
         if (parsed.role === 'admin' && !isUnlocked) {
-          const defaultUser = INITIAL_USERS.find((u) => u.role === 'ventas') || INITIAL_USERS[1];
+          const defaultUser = mockStore.getUsers().find((u) => u.role === 'ventas') || INITIAL_USERS[1];
           sessionStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(defaultUser));
           return defaultUser;
         }
-        return parsed;
+        const effectiveUser = storeUser || { ...parsed, isActive: parsed.isActive ?? true };
+        sessionStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(effectiveUser));
+        return effectiveUser;
       }
       // Por defecto el usuario inicial es Ventas (rol comercial no administrativo)
-      const defaultUser = INITIAL_USERS.find((u) => u.role === 'ventas') || INITIAL_USERS[1];
+      const defaultUser = mockStore.getUsers().find((u) => u.role === 'ventas') || INITIAL_USERS[1];
       sessionStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(defaultUser));
       return defaultUser;
     } catch {
@@ -63,9 +70,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Estado del Modal de Acceso Denegado (Rojo en el centro)
   const [isAccessDeniedOpen, setIsAccessDeniedOpen] = useState(false);
+  const [accessDeniedTitle, setAccessDeniedTitle] = useState('¡ACCESO DENEGADO!');
   const [accessDeniedMessage, setAccessDeniedMessage] = useState<string | null>(null);
 
-  const triggerAccessDenied = useCallback((message?: string) => {
+  const triggerAccessDenied = useCallback((message?: string, title?: string) => {
+    setAccessDeniedTitle(title || '¡ACCESO DENEGADO!');
     setAccessDeniedMessage(message || null);
     setIsAccessDeniedOpen(true);
   }, []);
@@ -132,7 +141,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true);
     await new Promise((res) => setTimeout(res, 350));
 
-    const found = INITIAL_USERS.find((u) => u.email.toLowerCase() === email.toLowerCase());
+    // Buscar primero en el store local para obtener el estado más reciente (activo/inactivo)
+    const storeUser = mockStore.getUsers().find((u) => u.email.toLowerCase() === email.toLowerCase());
+    const found = storeUser || INITIAL_USERS.find((u) => u.email.toLowerCase() === email.toLowerCase());
 
     // Si el usuario que intenta entrar es admin pero NO está desbloqueado el modo secreto:
     if (found && found.role === 'admin' && !isAdminUnlocked) {
@@ -141,6 +152,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         'El perfil de Administrador General está protegido bajo protocolo de seguridad oculto. Se requiere realizar la secuencia de 5 clics sobre el logotipo corporativo para habilitar este acceso.'
       );
       throw new Error('ACCESO_ADMIN_BLOQUEADO');
+    }
+
+    // Verificar si el usuario está deshabilitado (isActive === false)
+    if (found && found.isActive === false) {
+      setIsLoading(false);
+      triggerAccessDenied(
+        `La cuenta asociada a ${found.name} (${found.email}) ha sido desactivada por el Administrador. No es posible iniciar sesión hasta que sea reactivada desde el módulo de Administración.`,
+        'CUENTA DESACTIVADA'
+      );
+      throw new Error('CUENTA_DESACTIVADA');
     }
 
     if (found) {
@@ -172,6 +193,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(null);
     sessionStorage.removeItem(AUTH_STORAGE_KEY);
     sessionStorage.removeItem('erp_session_token');
+    // Resetear modo admin al cerrar sesión
+    setIsAdminUnlocked(false);
+    sessionStorage.removeItem(ADMIN_UNLOCKED_KEY);
+    clickCountRef.current = 0;
   };
 
   const switchRole = (role: UserRole) => {
@@ -183,7 +208,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
 
-    const userForRole = INITIAL_USERS.find((u) => u.role === role) || {
+    const storeUser = mockStore.getUsers().find((u) => u.role === role);
+    if (storeUser && storeUser.isActive === false) {
+      triggerAccessDenied(
+        `La cuenta del rol [${role.toUpperCase()}] (${storeUser.name}) ha sido desactivada por el Administrador. No es posible acceder con este rol.`,
+        'CUENTA DESACTIVADA'
+      );
+      return;
+    }
+
+    const userForRole = storeUser || INITIAL_USERS.find((u) => u.role === role) || {
       id: `usr-${role}`,
       name: `Usuario ${role.toUpperCase()}`,
       email: `${role}@enterprisecloud.erp`,
@@ -217,6 +251,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         lockAdmin,
         registerLogoClick,
         isAccessDeniedOpen,
+        accessDeniedTitle,
         accessDeniedMessage,
         triggerAccessDenied,
         closeAccessDenied,

@@ -79,7 +79,7 @@ const ROLE_PRESETS: RolePreset[] = [
 ];
 
 export const LoginPage: React.FC = () => {
-  const { login, isAdminUnlocked, triggerAccessDenied } = useAuth();
+  const { login, isAdminUnlocked, lockAdmin, triggerAccessDenied } = useAuth();
   const { showToast } = useToast();
   const navigate = useNavigate();
 
@@ -109,6 +109,12 @@ export const LoginPage: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Al reiniciar o cargar la pantalla de login, asegurar que el modo admin esté bloqueado
+  // para que siempre se requiera la secuencia de 5 clics
+  useEffect(() => {
+    lockAdmin();
+  }, [lockAdmin]);
 
   // Si se desbloquea o desactiva el modo admin mientras está en pantalla:
   useEffect(() => {
@@ -154,8 +160,15 @@ export const LoginPage: React.FC = () => {
       await login(email.trim(), password);
       showToast('Bienvenido a ERP EnterpriseCloud', 'success');
       navigate('/dashboard');
-    } catch {
-      setError('No se pudo iniciar sesión. Verifique sus credenciales corporativas.');
+    } catch (err: unknown) {
+      const errorMsg = (err as Error)?.message;
+      if (errorMsg === 'CUENTA_DESACTIVADA') {
+        setError('Tu cuenta ha sido desactivada. Contacta al Administrador del sistema.');
+      } else if (errorMsg === 'ACCESO_ADMIN_BLOQUEADO') {
+        setError('Acceso denegado: Modo Administrador protegido.');
+      } else {
+        setError('No se pudo iniciar sesión. Verifique sus credenciales corporativas.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -174,8 +187,13 @@ export const LoginPage: React.FC = () => {
       await login(preset.email);
       showToast(`Acceso exitoso como ${preset.title}`, 'success');
       navigate('/dashboard');
-    } catch {
-      setError('Error al procesar el inicio de sesión.');
+    } catch (err: unknown) {
+      const errorMsg = (err as Error)?.message;
+      if (errorMsg === 'CUENTA_DESACTIVADA') {
+        setError('Tu cuenta ha sido desactivada. Contacta al Administrador del sistema.');
+      } else {
+        setError('Error al procesar el inicio de sesión.');
+      }
     } finally {
       setIsLoading(false);
     }
