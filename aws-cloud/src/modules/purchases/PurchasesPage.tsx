@@ -15,7 +15,9 @@ import { Plus, Download, PackageCheck, CheckCircle2 } from 'lucide-react';
 
 export const PurchasesPage: React.FC = () => {
   const { showToast } = useToast();
-  const { user } = useAuth();
+  const { user, hasRole } = useAuth();
+  // Solo admin y compras pueden crear, aprobar y recibir
+  const canWrite = hasRole(['admin', 'compras']);
   const [orders, setOrders] = useState<PurchaseOrder[]>(() => mockStore.getPurchaseOrders());
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('todos');
@@ -135,11 +137,11 @@ export const PurchasesPage: React.FC = () => {
       align: 'center',
       render: (row) => <StatusBadge status={row.status} />,
     },
-    {
-      key: 'actions',
+    ...(canWrite ? [{
+      key: 'actions' as const,
       header: 'Acciones de Muelle',
-      align: 'right',
-      render: (row) => (
+      align: 'right' as const,
+      render: (row: PurchaseOrder) => (
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.35rem' }}>
           {row.status === 'solicitada' && (
             <Button
@@ -163,7 +165,7 @@ export const PurchasesPage: React.FC = () => {
           )}
         </div>
       ),
-    },
+    }] : []),
   ];
 
   return (
@@ -177,13 +179,15 @@ export const PurchasesPage: React.FC = () => {
             <Button variant="secondary" icon={<Download size={15} />} onClick={handleExportCSV}>
               Exportar CSV
             </Button>
-            <Button
-              variant="primary"
-              icon={<Plus size={16} />}
-              onClick={() => setIsModalOpen(true)}
-            >
-              Nueva Orden de Compra
-            </Button>
+            {canWrite && (
+              <Button
+                variant="primary"
+                icon={<Plus size={16} />}
+                onClick={() => setIsModalOpen(true)}
+              >
+                Nueva Orden de Compra
+              </Button>
+            )}
           </>
         }
       />

@@ -8,6 +8,7 @@ import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
 import { CustomerModal } from './CustomerModal';
 import { mockStore } from '../../services/mockStore';
 import { useToast } from '../../app/providers/ToastContext';
+import { useAuth } from '../../app/providers/AuthContext';
 import { formatCurrency } from '../../utils/formatters';
 import { exportToCSV } from '../../utils/export';
 import type { Customer } from '../../types';
@@ -15,6 +16,9 @@ import { Plus, Download, Edit2, Trash2 } from 'lucide-react';
 
 export const CustomersPage: React.FC = () => {
   const { showToast } = useToast();
+  const { hasRole } = useAuth();
+  // finanzas solo puede leer — admin y ventas pueden crear/editar/eliminar
+  const canWrite = hasRole(['admin', 'ventas']);
   const [customers, setCustomers] = useState<Customer[]>(() => mockStore.getCustomers());
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'todos' | 'activo' | 'inactivo'>('todos');
@@ -139,11 +143,11 @@ export const CustomersPage: React.FC = () => {
       align: 'center',
       render: (row) => <StatusBadge status={row.status} />,
     },
-    {
-      key: 'actions',
+    ...(canWrite ? [{
+      key: 'actions' as const,
       header: 'Acciones',
-      align: 'right',
-      render: (row) => (
+      align: 'right' as const,
+      render: (row: Customer) => (
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.35rem' }}>
           <Button
             variant="ghost"
@@ -171,7 +175,7 @@ export const CustomersPage: React.FC = () => {
           </Button>
         </div>
       ),
-    },
+    }] : []),
   ];
 
   return (
@@ -189,16 +193,18 @@ export const CustomersPage: React.FC = () => {
             >
               Exportar CSV
             </Button>
-            <Button
-              variant="primary"
-              icon={<Plus size={16} />}
-              onClick={() => {
-                setCustomerToEdit(null);
-                setIsModalOpen(true);
-              }}
-            >
-              Nuevo Cliente
-            </Button>
+            {canWrite && (
+              <Button
+                variant="primary"
+                icon={<Plus size={16} />}
+                onClick={() => {
+                  setCustomerToEdit(null);
+                  setIsModalOpen(true);
+                }}
+              >
+                Nuevo Cliente
+              </Button>
+            )}
           </>
         }
       />

@@ -7,6 +7,7 @@ import { StatusBadge } from '../../components/ui/StatusBadge';
 import { SaleModal } from './SaleModal';
 import { mockStore } from '../../services/mockStore';
 import { useToast } from '../../app/providers/ToastContext';
+import { useAuth } from '../../app/providers/AuthContext';
 import { formatCurrency, formatDate } from '../../utils/formatters';
 import { exportToCSV } from '../../utils/export';
 import type { Sale } from '../../types';
@@ -14,6 +15,9 @@ import { Plus, Download, CheckCircle, XCircle } from 'lucide-react';
 
 export const SalesPage: React.FC = () => {
   const { showToast } = useToast();
+  const { hasRole } = useAuth();
+  // finanzas solo puede leer — admin y ventas pueden crear, cobrar y anular
+  const canWrite = hasRole(['admin', 'ventas']);
   const [sales, setSales] = useState<Sale[]>(() => mockStore.getSales());
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('todos');
@@ -129,11 +133,11 @@ export const SalesPage: React.FC = () => {
       align: 'center',
       render: (row) => <StatusBadge status={row.status} />,
     },
-    {
-      key: 'actions',
+    ...(canWrite ? [{
+      key: 'actions' as const,
       header: 'Acciones',
-      align: 'right',
-      render: (row) => (
+      align: 'right' as const,
+      render: (row: Sale) => (
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.35rem' }}>
           {row.status === 'confirmada' && (
             <Button
@@ -163,7 +167,7 @@ export const SalesPage: React.FC = () => {
           )}
         </div>
       ),
-    },
+    }] : []),
   ];
 
   return (
@@ -177,13 +181,15 @@ export const SalesPage: React.FC = () => {
             <Button variant="secondary" icon={<Download size={15} />} onClick={handleExportCSV}>
               Exportar Ventas
             </Button>
-            <Button
-              variant="primary"
-              icon={<Plus size={16} />}
-              onClick={() => setIsModalOpen(true)}
-            >
-              Nueva Venta
-            </Button>
+            {canWrite && (
+              <Button
+                variant="primary"
+                icon={<Plus size={16} />}
+                onClick={() => setIsModalOpen(true)}
+              >
+                Nueva Venta
+              </Button>
+            )}
           </>
         }
       />

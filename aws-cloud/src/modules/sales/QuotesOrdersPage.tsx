@@ -5,12 +5,16 @@ import { Button } from '../../components/ui/Button';
 import { StatusBadge } from '../../components/ui/StatusBadge';
 import { mockStore } from '../../services/mockStore';
 import { useToast } from '../../app/providers/ToastContext';
+import { useAuth } from '../../app/providers/AuthContext';
 import { formatCurrency, formatDate } from '../../utils/formatters';
 import type { Quote, Order } from '../../types';
 import { Check, ArrowRight } from 'lucide-react';
 
 export const QuotesOrdersPage: React.FC = () => {
   const { showToast } = useToast();
+  const { hasRole } = useAuth();
+  const canManageQuotes = hasRole(['admin', 'ventas']);
+  const canManageOrders = hasRole(['admin', 'ventas', 'almacen']);
   const [activeTab, setActiveTab] = useState<'cotizaciones' | 'pedidos'>('cotizaciones');
   const [quotes, setQuotes] = useState<Quote[]>(() => mockStore.getQuotes());
   const [orders, setOrders] = useState<Order[]>(() => mockStore.getOrders());
@@ -93,30 +97,35 @@ export const QuotesOrdersPage: React.FC = () => {
       key: 'actions',
       header: 'Acciones de Flujo',
       align: 'right',
-      render: (row) => (
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.35rem' }}>
-          {row.status === 'enviada' && (
-            <Button
-              variant="secondary"
-              size="sm"
-              icon={<Check size={13} color="var(--color-success)" />}
-              onClick={() => handleUpdateQuoteStatus(row.id, 'aprobada')}
-            >
-              Aprobar
-            </Button>
-          )}
-          {row.status === 'aprobada' && (
-            <Button
-              variant="primary"
-              size="sm"
-              icon={<ArrowRight size={13} />}
-              onClick={() => handleConvertQuoteToSale(row)}
-            >
-              Convertir a Venta
-            </Button>
-          )}
-        </div>
-      ),
+      render: (row) => {
+        if (!canManageQuotes) {
+          return <span style={{ color: 'var(--color-text-muted)', fontSize: '0.8rem' }}>Solo lectura</span>;
+        }
+        return (
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.35rem' }}>
+            {row.status === 'enviada' && (
+              <Button
+                variant="secondary"
+                size="sm"
+                icon={<Check size={13} color="var(--color-success)" />}
+                onClick={() => handleUpdateQuoteStatus(row.id, 'aprobada')}
+              >
+                Aprobar
+              </Button>
+            )}
+            {row.status === 'aprobada' && (
+              <Button
+                variant="primary"
+                size="sm"
+                icon={<ArrowRight size={13} />}
+                onClick={() => handleConvertQuoteToSale(row)}
+              >
+                Convertir a Venta
+              </Button>
+            )}
+          </div>
+        );
+      },
     },
   ];
 
@@ -168,28 +177,33 @@ export const QuotesOrdersPage: React.FC = () => {
       key: 'actions',
       header: 'Acciones',
       align: 'right',
-      render: (row) => (
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.35rem' }}>
-          {row.status === 'pendiente' && (
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => handleUpdateOrderStatus(row.id, 'en_proceso')}
-            >
-              En Proceso
-            </Button>
-          )}
-          {row.status === 'en_proceso' && (
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={() => handleUpdateOrderStatus(row.id, 'completado')}
-            >
-              Completar
-            </Button>
-          )}
-        </div>
-      ),
+      render: (row) => {
+        if (!canManageOrders) {
+          return <span style={{ color: 'var(--color-text-muted)', fontSize: '0.8rem' }}>Solo lectura</span>;
+        }
+        return (
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.35rem' }}>
+            {row.status === 'pendiente' && (
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => handleUpdateOrderStatus(row.id, 'en_proceso')}
+              >
+                En Proceso
+              </Button>
+            )}
+            {row.status === 'en_proceso' && (
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => handleUpdateOrderStatus(row.id, 'completado')}
+              >
+                Completar
+              </Button>
+            )}
+          </div>
+        );
+      },
     },
   ];
 

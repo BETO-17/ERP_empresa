@@ -13,7 +13,7 @@ import type { DocumentItem, DocumentType } from '../../types';
 import { UploadCloud, Download, Trash2, FileText } from 'lucide-react';
 
 export const DocumentsPage: React.FC = () => {
-  const { user } = useAuth();
+  const { user, hasRole } = useAuth();
   const { showToast } = useToast();
   const [documents, setDocuments] = useState<DocumentItem[]>(() => mockStore.getDocuments());
 
@@ -136,13 +136,15 @@ export const DocumentsPage: React.FC = () => {
             onClick={() => handleDownload(row)}
             title="Descargar archivo"
           />
-          <Button
-            variant="ghost"
-            size="sm"
-            icon={<Trash2 size={14} color="var(--color-danger)" />}
-            onClick={() => handleDelete(row.id)}
-            title="Eliminar documento"
-          />
+          {hasRole(['admin']) && (
+            <Button
+              variant="ghost"
+              size="sm"
+              icon={<Trash2 size={14} color="var(--color-danger)" />}
+              onClick={() => handleDelete(row.id)}
+              title="Eliminar documento"
+            />
+          )}
         </div>
       ),
     },
