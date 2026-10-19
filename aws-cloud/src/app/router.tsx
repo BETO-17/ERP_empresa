@@ -1,9 +1,11 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { AppLayout } from '../layouts/AppLayout';
 import { AuthLayout } from '../layouts/AuthLayout';
+import { RoleGuard } from '../components/RoleGuard';
 import { LoginPage } from '../modules/auth/LoginPage';
 import { UnauthorizedPage } from '../modules/auth/UnauthorizedPage';
 import { DashboardPage } from '../modules/dashboard/DashboardPage';
+import { ProfilePage } from '../modules/profile/ProfilePage';
 import { CustomersPage } from '../modules/customers/CustomersPage';
 import { SuppliersPage } from '../modules/suppliers/SuppliersPage';
 import { ProductsPage } from '../modules/inventory/ProductsPage';
@@ -15,8 +17,14 @@ import { FinancePage } from '../modules/finance/FinancePage';
 import { DocumentsPage } from '../modules/documents/DocumentsPage';
 import { AdministrationPage } from '../modules/administration/AdministrationPage';
 import { ReportsPage } from '../modules/reports/ReportsPage';
+import { LandingPage } from '../modules/landing/LandingPage';
 
 export const router = createBrowserRouter([
+  // Ruta pública: Landing Page
+  {
+    path: '/landing',
+    element: <LandingPage />,
+  },
   // Rutas públicas / autenticación
   {
     element: <AuthLayout />,
@@ -40,50 +48,99 @@ export const router = createBrowserRouter([
         index: true,
         element: <Navigate to="/dashboard" replace />,
       },
+      // Dashboard — todos los roles autenticados
       {
         path: 'dashboard',
         element: <DashboardPage />,
       },
+      // Perfil del usuario actual
+      {
+        path: 'profile',
+        element: <ProfilePage />,
+      },
+      // Comercial
       {
         path: 'customers',
-        element: <CustomersPage />,
-      },
-      {
-        path: 'suppliers',
-        element: <SuppliersPage />,
-      },
-      {
-        path: 'products',
-        element: <ProductsPage />,
-      },
-      {
-        path: 'warehouses',
-        element: <CategoriesWarehousesPage />,
+        element: (
+          <RoleGuard allowedRoles={['admin', 'ventas', 'finanzas']}>
+            <CustomersPage />
+          </RoleGuard>
+        ),
       },
       {
         path: 'sales',
-        element: <SalesPage />,
+        element: (
+          <RoleGuard allowedRoles={['admin', 'ventas', 'finanzas']}>
+            <SalesPage />
+          </RoleGuard>
+        ),
       },
       {
         path: 'quotes-orders',
-        element: <QuotesOrdersPage />,
+        element: (
+          <RoleGuard allowedRoles={['admin', 'ventas']}>
+            <QuotesOrdersPage />
+          </RoleGuard>
+        ),
+      },
+      // Abastecimiento
+      {
+        path: 'suppliers',
+        element: (
+          <RoleGuard allowedRoles={['admin', 'compras', 'finanzas']}>
+            <SuppliersPage />
+          </RoleGuard>
+        ),
       },
       {
         path: 'purchases',
-        element: <PurchasesPage />,
+        element: (
+          <RoleGuard allowedRoles={['admin', 'compras']}>
+            <PurchasesPage />
+          </RoleGuard>
+        ),
+      },
+      // Inventario
+      {
+        path: 'products',
+        element: (
+          <RoleGuard allowedRoles={['admin', 'almacen', 'compras', 'ventas']}>
+            <ProductsPage />
+          </RoleGuard>
+        ),
       },
       {
-        path: 'finance',
-        element: <FinancePage />,
+        path: 'warehouses',
+        element: (
+          <RoleGuard allowedRoles={['admin', 'almacen']}>
+            <CategoriesWarehousesPage />
+          </RoleGuard>
+        ),
       },
+      // Finanzas
+      {
+        path: 'finance',
+        element: (
+          <RoleGuard allowedRoles={['admin', 'finanzas']}>
+            <FinancePage />
+          </RoleGuard>
+        ),
+      },
+      // Documentos — todos los roles
       {
         path: 'documents',
         element: <DocumentsPage />,
       },
+      // Administración — solo admin
       {
         path: 'administration',
-        element: <AdministrationPage />,
+        element: (
+          <RoleGuard allowedRoles={['admin']}>
+            <AdministrationPage />
+          </RoleGuard>
+        ),
       },
+      // Reportes — todos los roles
       {
         path: 'reports',
         element: <ReportsPage />,

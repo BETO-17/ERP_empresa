@@ -8,6 +8,7 @@ import { ProductModal } from './ProductModal';
 import { StockAdjustmentModal } from './StockAdjustmentModal';
 import { mockStore } from '../../services/mockStore';
 import { useToast } from '../../app/providers/ToastContext';
+import { useAuth } from '../../app/providers/AuthContext';
 import { formatCurrency, formatDateTime } from '../../utils/formatters';
 import { exportToCSV } from '../../utils/export';
 import type { Product, StockMovement } from '../../types';
@@ -15,6 +16,11 @@ import { Plus, Download, Edit2, AlertTriangle, ArrowRightLeft } from 'lucide-rea
 
 export const ProductsPage: React.FC = () => {
   const { showToast } = useToast();
+  const { hasRole } = useAuth();
+  // almacen y admin editan productos y ajustan Kardex
+  // compras solo puede ajustar (para recepciones), ventas solo lectura
+  const canEdit = hasRole(['admin', 'almacen']);
+  const canAdjust = hasRole(['admin', 'almacen', 'compras']);
   const [activeTab, setActiveTab] = useState<'catalogo' | 'kardex'>('catalogo');
   const [products, setProducts] = useState<Product[]>(() => mockStore.getProducts());
   const [movements, setMovements] = useState<StockMovement[]>(() => mockStore.getStockMovements());
@@ -146,40 +152,44 @@ export const ProductsPage: React.FC = () => {
       align: 'center',
       render: (row) => <StatusBadge status={row.status} />,
     },
-    {
-      key: 'actions',
+    ...(canAdjust || canEdit ? [{
+      key: 'actions' as const,
       header: 'Operaciones',
-      align: 'right',
-      render: (row) => (
+      align: 'right' as const,
+      render: (row: Product) => (
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.35rem' }}>
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={(e) => {
-              e.stopPropagation();
-              setProductToAdjust(row);
-              setIsAdjustmentModalOpen(true);
-            }}
-            title="Ajuste o Transferencia de Kardex"
-            icon={<ArrowRightLeft size={13} />}
-          >
-            Ajustar
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={(e) => {
-              e.stopPropagation();
-              setProductToEdit(row);
-              setIsProductModalOpen(true);
-            }}
-            aria-label={`Editar ${row.code}`}
-          >
-            <Edit2 size={14} />
-          </Button>
+          {canAdjust && (
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                setProductToAdjust(row);
+                setIsAdjustmentModalOpen(true);
+              }}
+              title="Ajuste o Transferencia de Kardex"
+              icon={<ArrowRightLeft size={13} />}
+            >
+              Ajustar
+            </Button>
+          )}
+          {canEdit && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                setProductToEdit(row);
+                setIsProductModalOpen(true);
+              }}
+              aria-label={`Editar ${row.code}`}
+            >
+              <Edit2 size={14} />
+            </Button>
+          )}
         </div>
       ),
-    },
+    }] : []),
   ];
 
   const kardexColumns: Column<StockMovement>[] = [
@@ -263,16 +273,18 @@ export const ProductsPage: React.FC = () => {
             <Button variant="secondary" icon={<Download size={15} />} onClick={handleExportCSV}>
               Exportar Inventario
             </Button>
-            <Button
-              variant="primary"
-              icon={<Plus size={16} />}
-              onClick={() => {
-                setProductToEdit(null);
-                setIsProductModalOpen(true);
-              }}
-            >
-              Nuevo Producto
-            </Button>
+            {canEdit && (
+              <Button
+                variant="primary"
+                icon={<Plus size={16} />}
+                onClick={() => {
+                  setProductToEdit(null);
+                  setIsProductModalOpen(true);
+                }}
+              >
+                Nuevo Producto
+              </Button>
+            )}
           </>
         }
       />

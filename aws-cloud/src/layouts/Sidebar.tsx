@@ -2,6 +2,7 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard,
+  UserCircle,
   Users,
   ShoppingCart,
   FileSpreadsheet,
@@ -18,6 +19,7 @@ import {
   Warehouse as WarehouseIcon,
 } from 'lucide-react';
 import { useAuth } from '../app/providers/AuthContext';
+import { useToast } from '../app/providers/ToastContext';
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -46,7 +48,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
   isMobileOpen,
   onCloseMobile,
 }) => {
-  const { hasRole, user } = useAuth();
+  const { hasRole, user, registerLogoClick, switchRole, isAdminUnlocked } = useAuth();
+  const { showToast } = useToast();
+
+  const handleLogoClick = () => {
+    const { justUnlocked, justLocked } = registerLogoClick();
+    if (justUnlocked) {
+      showToast('modo Admin', 'success');
+      switchRole('admin');
+    } else if (justLocked) {
+      showToast('modo Admin desactivado', 'info');
+    }
+  };
+
 
   const navigationGroups: NavGroup[] = [
     {
@@ -56,6 +70,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
           name: 'Dashboard',
           path: '/dashboard',
           icon: <LayoutDashboard size={18} />,
+        },
+        {
+          name: 'Mi Perfil',
+          path: '/profile',
+          icon: <UserCircle size={18} />,
         },
       ],
     },
@@ -204,10 +223,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
           }}
         >
           {!isCollapsed ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
+            <div
+              onClick={handleLogoClick}
+              className="logo-click-active"
+              title="EnterpriseCloud ERP (5 clics para acceso secreto de Administrador)"
+              style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', cursor: 'pointer' }}
+            >
               <div
                 style={{
-                  backgroundColor: 'var(--color-primary)',
+                  backgroundColor: isAdminUnlocked ? '#1d4ed8' : 'var(--color-primary)',
                   width: '32px',
                   height: '32px',
                   borderRadius: 'var(--radius-md)',
@@ -217,6 +241,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   fontWeight: 700,
                   fontSize: '1rem',
                   letterSpacing: '0.05em',
+                  boxShadow: isAdminUnlocked ? '0 0 15px rgba(29, 78, 216, 0.7)' : 'none',
+                  border: isAdminUnlocked ? '1px solid #60a5fa' : 'none',
                 }}
               >
                 <Layers size={18} />
@@ -230,16 +256,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
           ) : (
             <div
+              onClick={handleLogoClick}
+              className="logo-click-active"
               style={{
-                backgroundColor: 'var(--color-primary)',
+                backgroundColor: isAdminUnlocked ? '#1d4ed8' : 'var(--color-primary)',
                 width: '32px',
                 height: '32px',
                 borderRadius: 'var(--radius-md)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
+                cursor: 'pointer',
+                boxShadow: isAdminUnlocked ? '0 0 15px rgba(29, 78, 216, 0.7)' : 'none',
               }}
-              title="EnterpriseCloud ERP"
+              title="EnterpriseCloud ERP (5 clics para acceso secreto de Administrador)"
             >
               <Layers size={18} />
             </div>
@@ -361,7 +391,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
           }}
         >
           {!isCollapsed ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', minWidth: 0 }}>
+            <NavLink
+              to="/profile"
+              onClick={onCloseMobile}
+              style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', minWidth: 0, textDecoration: 'none', color: 'inherit' }}
+            >
               <div
                 style={{
                   width: '32px',
@@ -387,6 +421,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     whiteSpace: 'nowrap',
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
+                    color: '#e2e8f0',
                   }}
                 >
                   {user?.name}
@@ -395,7 +430,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   Rol: {user?.role}
                 </div>
               </div>
-            </div>
+            </NavLink>
           ) : (
             <button
               type="button"

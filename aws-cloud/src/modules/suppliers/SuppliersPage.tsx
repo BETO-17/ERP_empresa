@@ -8,12 +8,16 @@ import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
 import { SupplierModal } from './SupplierModal';
 import { mockStore } from '../../services/mockStore';
 import { useToast } from '../../app/providers/ToastContext';
+import { useAuth } from '../../app/providers/AuthContext';
 import { exportToCSV } from '../../utils/export';
 import type { Supplier } from '../../types';
 import { Plus, Download, Edit2, Trash2 } from 'lucide-react';
 
 export const SuppliersPage: React.FC = () => {
   const { showToast } = useToast();
+  const { hasRole } = useAuth();
+  // finanzas solo puede leer — admin y compras pueden crear/editar/eliminar
+  const canWrite = hasRole(['admin', 'compras']);
   const [suppliers, setSuppliers] = useState<Supplier[]>(() => mockStore.getSuppliers());
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('todos');
@@ -137,11 +141,11 @@ export const SuppliersPage: React.FC = () => {
       align: 'center',
       render: (row) => <StatusBadge status={row.status} />,
     },
-    {
-      key: 'actions',
+    ...(canWrite ? [{
+      key: 'actions' as const,
       header: 'Acciones',
-      align: 'right',
-      render: (row) => (
+      align: 'right' as const,
+      render: (row: Supplier) => (
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.35rem' }}>
           <Button
             variant="ghost"
@@ -169,7 +173,7 @@ export const SuppliersPage: React.FC = () => {
           </Button>
         </div>
       ),
-    },
+    }] : []),
   ];
 
   return (
@@ -183,16 +187,18 @@ export const SuppliersPage: React.FC = () => {
             <Button variant="secondary" icon={<Download size={15} />} onClick={handleExportCSV}>
               Exportar CSV
             </Button>
-            <Button
-              variant="primary"
-              icon={<Plus size={16} />}
-              onClick={() => {
-                setSupplierToEdit(null);
-                setIsModalOpen(true);
-              }}
-            >
-              Nuevo Proveedor
-            </Button>
+            {canWrite && (
+              <Button
+                variant="primary"
+                icon={<Plus size={16} />}
+                onClick={() => {
+                  setSupplierToEdit(null);
+                  setIsModalOpen(true);
+                }}
+              >
+                Nuevo Proveedor
+              </Button>
+            )}
           </>
         }
       />

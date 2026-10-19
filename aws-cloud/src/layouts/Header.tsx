@@ -6,21 +6,22 @@ import {
   LogOut,
   Sparkles,
   ChevronDown,
-  Check,
+  User,
+  AlertTriangle,
 } from 'lucide-react';
 import { useAuth } from '../app/providers/AuthContext';
 import { useToast } from '../app/providers/ToastContext';
-import type { UserRole } from '../types';
 import { Modal } from '../components/ui/Modal';
+import { Button } from '../components/ui/Button';
 import { mockStore } from '../services/mockStore';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 
 interface HeaderProps {
   onToggleMobile: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({ onToggleMobile }) => {
-  const { user, logout, switchRole } = useAuth();
+  const { user, logout, lockAdmin } = useAuth();
   const { showToast } = useToast();
   const navigate = useNavigate();
 
@@ -28,19 +29,16 @@ export const Header: React.FC<HeaderProps> = ({ onToggleMobile }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
 
-  const rolesList: { role: UserRole; label: string; desc: string }[] = [
-    { role: 'admin', label: 'Administrador General', desc: 'Acceso total y configuración' },
-    { role: 'ventas', label: 'Ejecutivo Comercial', desc: 'Clientes, Ventas y Cotizaciones' },
-    { role: 'compras', label: 'Jefe de Abastecimiento', desc: 'Proveedores y Órdenes de Compra' },
-    { role: 'almacen', label: 'Encargado de Almacén', desc: 'Inventario, Stock y Kardex' },
-    { role: 'finanzas', label: 'Analista de Finanzas', desc: 'Tesorería, CxC y CxP' },
-  ];
-
-  const handleRoleChange = (r: UserRole) => {
-    switchRole(r);
+  const handleLogoutConfirmed = () => {
+    setIsLogoutConfirmOpen(false);
     setIsUserMenuOpen(false);
-    showToast(`Rol cambiado a: ${r.toUpperCase()} (Modo Demo)`, 'info');
+    // Resetear modo admin al cerrar sesión
+    lockAdmin();
+    logout();
+    navigate('/login');
+    showToast('Sesión finalizada exitosamente', 'info');
   };
 
   // Resultados de búsqueda global
@@ -119,7 +117,8 @@ export const Header: React.FC<HeaderProps> = ({ onToggleMobile }) => {
         </div>
 
         {/* Acciones Derecha */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+
           {/* Badge Informativo de Modo Demostración */}
           <div
             title="Esta sesión está operando con datos simulados locales y trazables según promt.md"
@@ -307,43 +306,26 @@ export const Header: React.FC<HeaderProps> = ({ onToggleMobile }) => {
                   </div>
                 </div>
 
-                {/* Cambio rápido de rol para testing */}
                 <div style={{ padding: '0.5rem', borderBottom: '1px solid var(--color-border)' }}>
-                  <div
+                  <Link
+                    to="/profile"
+                    onClick={() => setIsUserMenuOpen(false)}
                     style={{
-                      fontSize: '0.6875rem',
-                      fontWeight: 600,
-                      color: 'var(--color-text-muted)',
-                      padding: '0.25rem 0.5rem',
-                      textTransform: 'uppercase',
+                      width: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      padding: '0.5rem 0.625rem',
+                      fontSize: '0.8125rem',
+                      color: 'var(--color-text-main)',
+                      textDecoration: 'none',
+                      borderRadius: 'var(--radius-sm)',
+                      fontWeight: 500,
                     }}
                   >
-                    Probar como otro rol:
-                  </div>
-                  {rolesList.map((r) => (
-                    <button
-                      key={r.role}
-                      type="button"
-                      onClick={() => handleRoleChange(r.role)}
-                      style={{
-                        width: '100%',
-                        textAlign: 'left',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        padding: '0.4rem 0.5rem',
-                        fontSize: '0.75rem',
-                        backgroundColor: user?.role === r.role ? 'var(--color-primary-light)' : 'transparent',
-                        color: user?.role === r.role ? 'var(--color-primary)' : 'var(--color-text-main)',
-                        border: 'none',
-                        borderRadius: 'var(--radius-sm)',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      <span>{r.label}</span>
-                      {user?.role === r.role && <Check size={14} />}
-                    </button>
-                  ))}
+                    <User size={15} color="var(--color-primary)" />
+                    <span>Mi Perfil</span>
+                  </Link>
                 </div>
 
                 <div style={{ padding: '0.5rem' }}>
@@ -351,9 +333,7 @@ export const Header: React.FC<HeaderProps> = ({ onToggleMobile }) => {
                     type="button"
                     onClick={() => {
                       setIsUserMenuOpen(false);
-                      logout();
-                      navigate('/login');
-                      showToast('Sesión finalizada exitosamente', 'info');
+                      setIsLogoutConfirmOpen(true);
                     }}
                     style={{
                       width: '100%',
@@ -378,6 +358,39 @@ export const Header: React.FC<HeaderProps> = ({ onToggleMobile }) => {
           </div>
         </div>
       </header>
+
+      {/* Modal Confirmación Cerrar Sesión */}
+      <Modal
+        isOpen={isLogoutConfirmOpen}
+        onClose={() => setIsLogoutConfirmOpen(false)}
+        title="Cerrar Sesión"
+        size="sm"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setIsLogoutConfirmOpen(false)}>
+              Cancelar
+            </Button>
+            <Button variant="danger" onClick={handleLogoutConfirmed} icon={<LogOut size={15} />}>
+              Sí, cerrar sesión
+            </Button>
+          </>
+        }
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem', padding: '0.5rem 0' }}>
+          <div style={{
+            width: '56px', height: '56px', borderRadius: '50%',
+            backgroundColor: '#fef2f2', display: 'flex', alignItems: 'center', justifyContent: 'center'
+          }}>
+            <AlertTriangle size={28} color="#ef4444" />
+          </div>
+          <div style={{ textAlign: 'center' }}>
+            <p style={{ fontWeight: 600, fontSize: '1rem', margin: 0 }}>¿Estás seguro que deseas cerrar sesión?</p>
+            <p style={{ color: 'var(--color-text-muted)', fontSize: '0.8125rem', marginTop: '0.35rem' }}>
+              Se cerrará la sesión de <strong>{user?.name}</strong> y deberás iniciar sesión nuevamente para acceder al ERP.
+            </p>
+          </div>
+        </div>
+      </Modal>
 
       {/* Modal de Búsqueda Global */}
       <Modal

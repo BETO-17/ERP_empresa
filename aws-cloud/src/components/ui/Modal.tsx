@@ -7,7 +7,7 @@ export interface ModalProps {
   title: string;
   children: React.ReactNode;
   footer?: React.ReactNode;
-  size?: 'md' | 'lg';
+  size?: 'sm' | 'md' | 'lg';
 }
 
 export const Modal: React.FC<ModalProps> = ({
@@ -50,7 +50,7 @@ export const Modal: React.FC<ModalProps> = ({
     >
       <div
         ref={modalRef}
-        className={`modal-content ${size === 'lg' ? 'modal-content-lg' : ''}`}
+        className={`modal-content ${size === 'lg' ? 'modal-content-lg' : ''} ${size === 'sm' ? 'modal-content-sm' : ''}`}
       >
         <div className="modal-header">
           <h3 id="modal-title" className="modal-title">
