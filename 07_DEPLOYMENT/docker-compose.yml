@@ -1,0 +1,58 @@
+services:
+  # Base de Datos Relacional PostgreSQL (Simula Amazon RDS)
+  postgres_db:
+    image: postgres:16-alpine
+    container_name: erp_postgres_rds
+    restart: always
+    environment:
+      POSTGRES_DB: erp_enterprisecloud
+      POSTGRES_USER: erp_admin
+      POSTGRES_PASSWORD: erp_password_2026
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ../04_DATABASE/01_schema_postgresql.sql:/docker-entrypoint-initdb.d/01_schema.sql
+      - ../04_DATABASE/02_seed_data.sql:/docker-entrypoint-initdb.d/02_seeds.sql
+    networks:
+      - erp_network
+
+  # Backend FastAPI (Simula Amazon EC2)
+  fastapi_backend:
+    build:
+      context: ../03_BACKEND
+      dockerfile: ../07_DEPLOYMENT/Dockerfile.backend
+    container_name: erp_fastapi_ec2
+    restart: always
+    environment:
+      DATABASE_URL: postgresql://erp_admin:erp_password_2026@postgres_db:5432/erp_enterprisecloud
+      AWS_S3_BUCKET_NAME: erp-enterprisecloud-documents-2026
+      AWS_REGION: us-east-1
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres_db
+    networks:
+      - erp_network
+
+  # Frontend React + TypeScript (Vite)
+  react_frontend:
+    build:
+      context: ../aws-cloud
+      dockerfile: ../07_DEPLOYMENT/Dockerfile.frontend
+    container_name: erp_react_frontend
+    restart: always
+    ports:
+      - "5173:80"
+    depends_on:
+      - fastapi_backend
+    networks:
+      - erp_network
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  erp_network:
+    driver: bridge

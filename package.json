@@ -1,0 +1,12 @@
+{
+  "name": "erp-enterprisecloud",
+  "version": "1.0.0",
+  "private": true,
+  "description": "ERP EnterpriseCloud - Sistema Integrado de Gestion Empresarial",
+  "scripts": {
+    "dev": "npm --prefix aws-cloud run dev",
+    "build": "npm --prefix aws-cloud run build",
+    "lint": "npm --prefix aws-cloud run lint",
+    "preview": "npm --prefix aws-cloud run preview"
+  }
+}

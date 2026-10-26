@@ -18,9 +18,15 @@ import { useNavigate, Link } from 'react-router-dom';
 
 interface HeaderProps {
   onToggleMobile: () => void;
+  onToggleSidebarCollapse?: () => void;
+  isSidebarCollapsed?: boolean;
 }
 
-export const Header: React.FC<HeaderProps> = ({ onToggleMobile }) => {
+export const Header: React.FC<HeaderProps> = ({
+  onToggleMobile,
+  onToggleSidebarCollapse,
+  isSidebarCollapsed = false,
+}) => {
   const { user, logout, lockAdmin } = useAuth();
   const { showToast } = useToast();
   const navigate = useNavigate();
@@ -75,22 +81,41 @@ export const Header: React.FC<HeaderProps> = ({ onToggleMobile }) => {
           zIndex: 30,
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          {/* Botón menú móvil */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.875rem' }}>
+          {/* Botón de 3 barras (Hamburguesa) para alternar el menú lateral */}
           <button
             type="button"
-            onClick={onToggleMobile}
+            onClick={() => {
+              if (window.innerWidth < 1024) {
+                onToggleMobile();
+              } else if (onToggleSidebarCollapse) {
+                onToggleSidebarCollapse();
+              } else {
+                onToggleMobile();
+              }
+            }}
             style={{
-              background: 'none',
-              border: 'none',
+              background: 'transparent',
+              border: '1px solid var(--color-border)',
+              borderRadius: 'var(--radius-md)',
               color: 'var(--color-text-main)',
               cursor: 'pointer',
               display: 'flex',
-              padding: '4px',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '6px 8px',
+              transition: 'all 0.15s ease',
             }}
-            aria-label="Abrir navegación"
+            title={isSidebarCollapsed ? "Expandir menú lateral (3 barras)" : "Ocultar menú lateral (3 barras)"}
+            aria-label="Alternar menú lateral"
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'var(--color-surface-subtle)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent';
+            }}
           >
-            <Menu size={20} />
+            <Menu size={19} />
           </button>
 
           {/* Buscador Rápido Global */}

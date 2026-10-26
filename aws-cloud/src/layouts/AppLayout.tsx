@@ -60,7 +60,11 @@ export const AppLayout: React.FC = () => {
       />
 
       <div className="erp-main-wrapper">
-        <Header onToggleMobile={() => setIsMobileOpen((prev) => !prev)} />
+        <Header
+          onToggleMobile={() => setIsMobileOpen((prev) => !prev)}
+          onToggleSidebarCollapse={() => setIsSidebarCollapsed((prev) => !prev)}
+          isSidebarCollapsed={isSidebarCollapsed}
+        />
         <main className="erp-content-area" id="main-content">
           <Outlet />
         </main>

@@ -1,5 +1,5 @@
-import React from 'react';
-import { NavLink } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { NavLink, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
   UserCircle,
@@ -16,7 +16,10 @@ import {
   BarChart3,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   Warehouse as WarehouseIcon,
+  Briefcase,
+  Boxes,
 } from 'lucide-react';
 import { useAuth } from '../app/providers/AuthContext';
 import { useToast } from '../app/providers/ToastContext';
@@ -39,6 +42,7 @@ interface NavItem {
 
 interface NavGroup {
   group: string;
+  icon?: React.ReactNode;
   items: NavItem[];
 }
 
@@ -50,6 +54,35 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const { hasRole, user, registerLogoClick, switchRole, isAdminUnlocked } = useAuth();
   const { showToast } = useToast();
+  const location = useLocation();
+
+  // Estado para controlar qué secciones están desplegadas/abiertas
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
+    General: true,
+    Comercial: true,
+    Abastecimiento: true,
+    Inventario: true,
+    Finanzas: true,
+    Documentos: true,
+    Administración: true,
+  });
+
+  // Asegura que la sección que contiene la página activa esté siempre desplegada
+  useEffect(() => {
+    const currentPath = location.pathname;
+    navigationGroups.forEach((g) => {
+      if (g.items.some((item) => item.path === currentPath)) {
+        setExpandedGroups((prev) => ({ ...prev, [g.group]: true }));
+      }
+    });
+  }, [location.pathname]);
+
+  const toggleGroup = (groupName: string) => {
+    setExpandedGroups((prev) => ({
+      ...prev,
+      [groupName]: !prev[groupName],
+    }));
+  };
 
   const handleLogoClick = () => {
     const { justUnlocked, justLocked } = registerLogoClick();
@@ -61,10 +94,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
     }
   };
 
-
   const navigationGroups: NavGroup[] = [
     {
       group: 'General',
+      icon: <LayoutDashboard size={15} />,
       items: [
         {
           name: 'Dashboard',
@@ -80,6 +113,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     },
     {
       group: 'Comercial',
+      icon: <Briefcase size={15} />,
       items: [
         {
           name: 'Clientes',
@@ -103,6 +137,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     },
     {
       group: 'Abastecimiento',
+      icon: <Truck size={15} />,
       items: [
         {
           name: 'Proveedores',
@@ -120,6 +155,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     },
     {
       group: 'Inventario',
+      icon: <Boxes size={15} />,
       items: [
         {
           name: 'Productos y Stock',
@@ -139,6 +175,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     },
     {
       group: 'Finanzas',
+      icon: <DollarSign size={15} />,
       items: [
         {
           name: 'Tesorería y CxC / CxP',
@@ -150,6 +187,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     },
     {
       group: 'Documentos',
+      icon: <FolderLock size={15} />,
       items: [
         {
           name: 'Repositorio Cloud',
@@ -160,6 +198,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     },
     {
       group: 'Administración',
+      icon: <ShieldCheck size={15} />,
       items: [
         {
           name: 'Usuarios y Auditoría',
@@ -211,99 +250,123 @@ export const Sidebar: React.FC<SidebarProps> = ({
         }}
         className={isMobileOpen ? 'sidebar-mobile-open' : ''}
       >
-        {/* Encabezado del Logo */}
+        {/* Encabezado del Logo y Botón de Colapso/Expansión */}
         <div
           style={{
             height: 'var(--header-height)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: isCollapsed ? 'center' : 'space-between',
-            padding: isCollapsed ? '0' : '0 1.25rem',
+            padding: isCollapsed ? '0 0.5rem' : '0 1rem 0 1.25rem',
             borderBottom: '1px solid var(--color-navy-800)',
           }}
         >
           {!isCollapsed ? (
-            <div
-              onClick={handleLogoClick}
-              className="logo-click-active"
-              title="EnterpriseCloud ERP (5 clics para acceso secreto de Administrador)"
-              style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', cursor: 'pointer' }}
-            >
+            <>
               <div
+                onClick={handleLogoClick}
+                className="logo-click-active"
+                title="EnterpriseCloud ERP (5 clics para acceso secreto de Administrador)"
+                style={{ display: 'flex', alignItems: 'center', gap: '0.625rem', cursor: 'pointer' }}
+              >
+                <div
+                  style={{
+                    backgroundColor: isAdminUnlocked ? '#1d4ed8' : 'var(--color-primary)',
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: 'var(--radius-md)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontWeight: 700,
+                    fontSize: '1rem',
+                    letterSpacing: '0.05em',
+                    boxShadow: isAdminUnlocked ? '0 0 15px rgba(29, 78, 216, 0.7)' : 'none',
+                    border: isAdminUnlocked ? '1px solid #60a5fa' : 'none',
+                  }}
+                >
+                  <Layers size={18} />
+                </div>
+                <div style={{ lineHeight: 1.15 }}>
+                  <div style={{ fontWeight: 700, fontSize: '0.95rem', letterSpacing: '-0.01em' }}>
+                    EnterpriseCloud
+                  </div>
+                  <div style={{ fontSize: '0.6875rem', color: '#94a3b8' }}>ERP SaaS Platform</div>
+                </div>
+              </div>
+
+              {/* Botón contraer "<" (palomita) */}
+              <button
+                type="button"
+                onClick={onToggleCollapse}
                 style={{
-                  backgroundColor: isAdminUnlocked ? '#1d4ed8' : 'var(--color-primary)',
-                  width: '32px',
-                  height: '32px',
-                  borderRadius: 'var(--radius-md)',
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  color: '#cbd5e1',
+                  cursor: 'pointer',
+                  padding: '5px',
+                  borderRadius: 'var(--radius-sm)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontWeight: 700,
-                  fontSize: '1rem',
-                  letterSpacing: '0.05em',
-                  boxShadow: isAdminUnlocked ? '0 0 15px rgba(29, 78, 216, 0.7)' : 'none',
-                  border: isAdminUnlocked ? '1px solid #60a5fa' : 'none',
+                  transition: 'all 0.15s ease',
                 }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.15)';
+                  e.currentTarget.style.color = '#ffffff';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
+                  e.currentTarget.style.color = '#cbd5e1';
+                }}
+                title="Contraer menú lateral"
+                aria-label="Contraer menú lateral"
               >
-                <Layers size={18} />
-              </div>
-              <div style={{ lineHeight: 1.15 }}>
-                <div style={{ fontWeight: 700, fontSize: '0.95rem', letterSpacing: '-0.01em' }}>
-                  EnterpriseCloud
-                </div>
-                <div style={{ fontSize: '0.6875rem', color: '#94a3b8' }}>ERP SaaS Platform</div>
-              </div>
-            </div>
+                <ChevronLeft size={17} />
+              </button>
+            </>
           ) : (
-            <div
-              onClick={handleLogoClick}
-              className="logo-click-active"
+            /* Modo colapsado: Botón ">" visible para expandir de nuevo */
+            <button
+              type="button"
+              onClick={onToggleCollapse}
+              title="Expandir menú lateral"
+              aria-label="Expandir menú lateral"
               style={{
                 backgroundColor: isAdminUnlocked ? '#1d4ed8' : 'var(--color-primary)',
-                width: '32px',
-                height: '32px',
+                width: '34px',
+                height: '34px',
                 borderRadius: 'var(--radius-md)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
+                border: 'none',
                 cursor: 'pointer',
-                boxShadow: isAdminUnlocked ? '0 0 15px rgba(29, 78, 216, 0.7)' : 'none',
+                color: '#ffffff',
+                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
+                transition: 'all 0.15s ease',
               }}
-              title="EnterpriseCloud ERP (5 clics para acceso secreto de Administrador)"
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'scale(1.05)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'scale(1)';
+              }}
             >
-              <Layers size={18} />
-            </div>
+              <ChevronRight size={18} />
+            </button>
           )}
-
-          {/* Botón contraer en escritorio */}
-          <button
-            type="button"
-            onClick={onToggleCollapse}
-            style={{
-              background: 'transparent',
-              border: 'none',
-              color: '#94a3b8',
-              cursor: 'pointer',
-              padding: '4px',
-              borderRadius: 'var(--radius-sm)',
-              display: isCollapsed ? 'none' : 'flex',
-              alignItems: 'center',
-            }}
-            aria-label={isCollapsed ? 'Expandir menú lateral' : 'Contraer menú lateral'}
-          >
-            <ChevronLeft size={18} />
-          </button>
         </div>
 
-        {/* Lista de Navegación */}
+        {/* Lista de Navegación con Acordeón por Grupos */}
         <div
           style={{
             flex: 1,
             overflowY: 'auto',
-            padding: '1rem 0.5rem',
+            padding: '0.75rem 0.5rem',
             display: 'flex',
             flexDirection: 'column',
-            gap: '1rem',
+            gap: '0.35rem',
           }}
         >
           {navigationGroups.map((group) => {
@@ -314,66 +377,149 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
             if (visibleItems.length === 0) return null;
 
+            const isExpanded = expandedGroups[group.group] ?? false;
+            const isAnyChildActive = visibleItems.some((it) => it.path === location.pathname);
+
             return (
-              <div key={group.group}>
-                {!isCollapsed && (
-                  <div
+              <div key={group.group} style={{ display: 'flex', flexDirection: 'column' }}>
+                {!isCollapsed ? (
+                  <button
+                    type="button"
+                    onClick={() => toggleGroup(group.group)}
+                    className="sidebar-group-btn"
+                    aria-expanded={isExpanded}
                     style={{
-                      fontSize: '0.6875rem',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.08em',
-                      color: '#64748b',
-                      padding: '0 0.75rem 0.35rem 0.75rem',
-                      fontWeight: 600,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '0.45rem 0.65rem',
+                      borderRadius: 'var(--radius-md)',
+                      backgroundColor: isAnyChildActive
+                        ? 'rgba(37, 99, 235, 0.12)'
+                        : 'transparent',
+                      border: 'none',
+                      color: isAnyChildActive ? '#93c5fd' : '#94a3b8',
+                      cursor: 'pointer',
+                      width: '100%',
+                      textAlign: 'left',
+                      transition: 'all 0.15s ease',
+                      userSelect: 'none',
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isAnyChildActive) e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
+                      e.currentTarget.style.color = '#ffffff';
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isAnyChildActive) e.currentTarget.style.backgroundColor = 'transparent';
+                      e.currentTarget.style.color = isAnyChildActive ? '#93c5fd' : '#94a3b8';
                     }}
                   >
-                    {group.group}
-                  </div>
-                )}
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                  {visibleItems.map((item) => (
-                    <NavLink
-                      key={item.path}
-                      to={item.path}
-                      onClick={onCloseMobile}
-                      title={isCollapsed ? item.name : undefined}
-                      style={({ isActive }) => ({
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: isCollapsed ? 'center' : 'space-between',
-                        padding: isCollapsed ? '0.65rem 0' : '0.55rem 0.75rem',
-                        borderRadius: 'var(--radius-md)',
-                        fontSize: '0.8125rem',
-                        fontWeight: isActive ? 600 : 400,
-                        backgroundColor: isActive ? 'var(--color-primary)' : 'transparent',
-                        color: isActive ? '#ffffff' : '#cbd5e1',
-                        textDecoration: 'none',
-                        transition: 'all 0.15s ease',
-                      })}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
-                        <span style={{ display: 'flex', alignItems: 'center' }}>{item.icon}</span>
-                        {!isCollapsed && <span>{item.name}</span>}
-                      </div>
-
-                      {!isCollapsed && item.badge && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
+                      {group.icon && (
                         <span
                           style={{
-                            fontSize: '0.625rem',
-                            fontWeight: 700,
-                            padding: '0.15rem 0.4rem',
-                            borderRadius: 'var(--radius-full)',
-                            backgroundColor: item.badgeColor || 'var(--color-navy-700)',
-                            color: '#0f172a',
+                            display: 'flex',
+                            alignItems: 'center',
+                            color: isAnyChildActive ? '#60a5fa' : '#64748b',
                           }}
                         >
-                          {item.badge}
+                          {group.icon}
                         </span>
                       )}
-                    </NavLink>
-                  ))}
-                </div>
+                      <span
+                        style={{
+                          fontSize: '0.72rem',
+                          fontWeight: 700,
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.06em',
+                          lineHeight: 1.2,
+                        }}
+                      >
+                        {group.group}
+                      </span>
+                    </div>
+
+                    {/* Palomita / Flecha interactiva que gira con animación */}
+                    <span
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        transform: isExpanded ? 'rotate(0deg)' : 'rotate(-90deg)',
+                        transition: 'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                        color: isExpanded ? '#38bdf8' : '#64748b',
+                      }}
+                    >
+                      <ChevronDown size={14} />
+                    </span>
+                  </button>
+                ) : (
+                  <div
+                    style={{
+                      height: '1px',
+                      backgroundColor: 'var(--color-navy-800)',
+                      margin: '0.4rem 0.25rem',
+                    }}
+                  />
+                )}
+
+                {/* Sub-elementos con animación y toggle */}
+                {(!isCollapsed ? isExpanded : true) && (
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '2px',
+                      marginTop: !isCollapsed ? '2px' : '0',
+                      marginBottom: !isCollapsed ? '0.35rem' : '0',
+                      paddingLeft: !isCollapsed ? '0.65rem' : '0',
+                      borderLeft: !isCollapsed && isExpanded ? '2px solid rgba(59, 130, 246, 0.25)' : 'none',
+                      marginLeft: !isCollapsed ? '0.75rem' : '0',
+                      transition: 'all 0.2s ease',
+                    }}
+                  >
+                    {visibleItems.map((item) => (
+                      <NavLink
+                        key={item.path}
+                        to={item.path}
+                        onClick={onCloseMobile}
+                        title={isCollapsed ? item.name : undefined}
+                        style={({ isActive }) => ({
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: isCollapsed ? 'center' : 'space-between',
+                          padding: isCollapsed ? '0.65rem 0' : '0.5rem 0.75rem',
+                          borderRadius: 'var(--radius-md)',
+                          fontSize: '0.8125rem',
+                          fontWeight: isActive ? 600 : 400,
+                          backgroundColor: isActive ? 'var(--color-primary)' : 'transparent',
+                          color: isActive ? '#ffffff' : '#cbd5e1',
+                          textDecoration: 'none',
+                          transition: 'all 0.15s ease',
+                        })}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
+                          <span style={{ display: 'flex', alignItems: 'center' }}>{item.icon}</span>
+                          {!isCollapsed && <span>{item.name}</span>}
+                        </div>
+
+                        {!isCollapsed && item.badge && (
+                          <span
+                            style={{
+                              fontSize: '0.625rem',
+                              fontWeight: 700,
+                              padding: '0.15rem 0.4rem',
+                              borderRadius: 'var(--radius-full)',
+                              backgroundColor: item.badgeColor || 'var(--color-navy-700)',
+                              color: '#0f172a',
+                            }}
+                          >
+                            {item.badge}
+                          </span>
+                        )}
+                      </NavLink>
+                    ))}
+                  </div>
+                )}
               </div>
             );
           })}
