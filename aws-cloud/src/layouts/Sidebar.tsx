@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
@@ -56,26 +56,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const { showToast } = useToast();
   const location = useLocation();
 
-  // Estado para controlar qué secciones están desplegadas/abiertas
-  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
-    General: true,
-    Comercial: true,
-    Abastecimiento: true,
-    Inventario: true,
-    Finanzas: true,
-    Documentos: true,
-    Administración: true,
-  });
-
-  // Asegura que la sección que contiene la página activa esté siempre desplegada
-  useEffect(() => {
-    const currentPath = location.pathname;
-    navigationGroups.forEach((g) => {
-      if (g.items.some((item) => item.path === currentPath)) {
-        setExpandedGroups((prev) => ({ ...prev, [g.group]: true }));
-      }
-    });
-  }, [location.pathname]);
+  // Todas las secciones inician cerradas por defecto, sin importar el rol
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
 
   const toggleGroup = (groupName: string) => {
     setExpandedGroups((prev) => ({
